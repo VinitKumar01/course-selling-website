@@ -12,8 +12,8 @@ courseRouter.get("/preview", async (req, res)=> {
     }
 })
 
-courseRouter.post("/purchase",userMiddleware, async (req, res)=> {
-    const userId = req._id;
+courseRouter.post("/purchase",userMiddleware , async (req, res)=> {
+    const userId = req.id;
     const courseId = req.body.courseId;
 
     //add a payment logic

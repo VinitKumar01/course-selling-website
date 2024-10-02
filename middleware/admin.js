@@ -4,14 +4,14 @@ const JWT_SECRET_ADMIN = process.env.JWT_SECRET_ADMIN;
 
 function adminMiddleware(req, res, next) {
     const token = req.headers.token;
-    const decoded = jwt.verify(token, JWT_SECRET_ADMIN);
 
-    if (decoded) {
-        req._id = decoded._id;
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET_ADMIN);
+        req.id = decoded.id;
         next()
-    } else {
+    } catch (error) {
         res.status(403).json({
-            message: "You are not signed in"
+            message: "Invalid Token"
         })
     }
 

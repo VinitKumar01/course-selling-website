@@ -27,7 +27,7 @@ userRouter.post("/signup", async (req, res)=> {
         })
     } catch (error) {
         res.status(400).json({
-            message: "Error Occured While Signingup"
+            message: `Error Occured While Signingup, ${error}`
         })
     }
     
@@ -37,14 +37,15 @@ userRouter.post("/signin", async (req, res)=> {
     const email = req.body.email;
     const password = req.body.password;
 
-    const response = await userModel.findOne({
-        email: email,
-        password: await bcrypt.hash(password, 5)
+    const user = await userModel.findOne({
+        email: email
     });
 
-    if (response) {
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (isMatch) {
         const token = jwt.sign({
-            id: response._id
+            id: user._id
         }, JWT_SECRET_USER);
 
         res.json({
@@ -58,25 +59,32 @@ userRouter.post("/signin", async (req, res)=> {
 })
 
 userRouter.get("/purchases", userMiddleware, async (req, res)=> {
-    const userId = req._id;
+    const userId = req.id;
     
-    const purchases = await purchaseModel.findOne({
+    const purchases = await purchaseModel.find({
         userId: userId
     });
 
-    let purchasedCourseId = [];
+    let purchasedCourseIds = [];
 
-    for (let course of purchases) {
-        purchasedCourseId.push(course.courseId)
+    try {
+        for (let i = 0; i<purchases.length;i++){ 
+            purchasedCourseIds.push(purchases[i].courseId)
+        }
+    
+        const courseData = await courseModel.find({
+            _id: { $in: purchasedCourseIds }
+        });
+    
+        res.json({
+            courseData
+        })
+    } catch (error) {
+        res.status(400).json({
+            message:"You have no courses"
+        })
     }
 
-    const courseData = await courseModel.find({
-        _id: { $in: purchasedCourseIds }
-    })
-
-    res.json({
-        courseData
-    })
 })
 
 module.exports = {

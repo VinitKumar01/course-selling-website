@@ -37,14 +37,15 @@ adminRouter.post("/signin", async (req, res)=> {
     const email = req.body.email;
     const password = req.body.password;
 
-    const response = await adminModel.findOne({
+    const admin = await adminModel.findOne({
         email: email,
-        password: password,
     });
 
-    if (response) {
+    const isMatch = await bcrypt.compare(password, admin.password);
+
+    if (isMatch) {
         const token = jwt.sign({
-            id: response._id
+            id: admin._id
         }, JWT_SECRET_ADMIN);
 
         res.json({
@@ -59,7 +60,7 @@ adminRouter.post("/signin", async (req, res)=> {
 
 adminRouter.post("/course", adminMiddleware, async (req, res)=> {
     const {title, description, price, imageUrl} = req.body;
-    const creatorId = req._id;
+    const creatorId = req.id;
 
     try {
         const course = await courseModel.create({
@@ -75,13 +76,13 @@ adminRouter.post("/course", adminMiddleware, async (req, res)=> {
         })
     } catch (error) {
         res.status(400).json({
-            meaasge: "Failed to add course"
+            meaasge: "Failed to add course" + ` ${error}, ${req._id}`
         })
     }
 })
 
 adminRouter.put("/course", adminMiddleware, async (req, res)=> {
-    const adminId = req._id;
+    const adminId = req.id;
     const {title, description, price, imageUrl, courseId} = req.body;
 
     try {
@@ -107,7 +108,7 @@ adminRouter.put("/course", adminMiddleware, async (req, res)=> {
 })
 
 adminRouter.get("/course/bulk", adminMiddleware, async function(req, res) {
-    const adminId = req._id;
+    const adminId = req.id;
     
     const courses = await courseModel.find({
         creatorId: adminId 
